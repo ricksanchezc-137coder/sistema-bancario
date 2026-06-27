@@ -111,6 +111,7 @@ def main():
                 print(f"Erro: {e}")
 
         elif escolha == "1":
+            usuario = None
             while True:
                 nome = input("Usuário: ")
                 senha = input("Senha: ")
@@ -141,5 +142,5 @@ def main():
             print("Opcao invalida")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     main()
