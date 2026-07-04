@@ -1,2 +1,0 @@
-[pytest11]
-meu_plugin = meu_plugin
