@@ -1,0 +1,4 @@
+Metadata-Version: 2.4
+Name: pytest_meu_plugin
+Version: 0.1.0
+Summary: plugin de relatorio para os testes do sistema-bancario

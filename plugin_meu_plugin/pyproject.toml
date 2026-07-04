@@ -1,0 +1,11 @@
+[build-system]
+requires = ['setuptools']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = 'pytest_meu_plugin'
+version = '0.1.0'
+description = 'plugin de relatorio para os testes do sistema-bancario'
+
+[project.entry-points.pytest11]
+meu_plugin = 'meu_plugin'

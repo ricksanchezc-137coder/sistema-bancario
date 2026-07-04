@@ -1,0 +1,7 @@
+meu_plugin.py
+pyproject.toml
+pytest_meu_plugin.egg-info/PKG-INFO
+pytest_meu_plugin.egg-info/SOURCES.txt
+pytest_meu_plugin.egg-info/dependency_links.txt
+pytest_meu_plugin.egg-info/entry_points.txt
+pytest_meu_plugin.egg-info/top_level.txt

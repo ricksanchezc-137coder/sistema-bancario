@@ -1,12 +1,10 @@
 import sqlite3
 from dados import DB_NAME
 
-
 def conectar():
     conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
     return conn
-
 
 def criar_tabelas():
     with conectar() as conn:
@@ -43,23 +41,19 @@ def criar_tabelas():
         )
         """)
 
-
 def executar(sql, params=None):
     with conectar() as conn:
         cursor = conn.cursor()
         cursor.execute(sql, params or ())
         return cursor
 
-
 def buscar_um(sql, params=None):
     cursor = executar(sql, params)
     return cursor.fetchone()
 
-
 def buscar_todos(sql, params=None):
     cursor = executar(sql, params)
     return cursor.fetchall()
-
 
 def executar_transacao(operacao):
     conn = conectar()
@@ -77,12 +71,4 @@ def executar_transacao(operacao):
 
     finally:
         conn.close()
-
-
-
-
-
-
-
-
 
