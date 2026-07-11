@@ -14,7 +14,7 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
 
     for status, reports in terminalreporter.stats.items():
         for report in reports:
-            if report.when == "call" and hasattr(report, "keywords") and "db" in report.keywords:
+            if getattr(report, "when", None) == "call" and hasattr(report, "keywords") and "db" in report.keywords:
                 total_db += 1
                 if status == "passed":
                     passou_db += 1
