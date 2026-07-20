@@ -14,6 +14,41 @@ def obter_conta(usuario_id):
     return None
 
 
+def submenu_extratos(conta):
+    print("1 - Extrato")
+    print("2 - Extrato por periodo")
+    print("3 - Extrato rapido")
+    print("4 - Exportar extrato")
+    print("5 - Exportar extrato por periodo")
+    print("6 - Exportar arquivo csv")
+    op = input("Escolha: ")
+    if op == "1":
+        mostrar_extrato(conta.id)
+    elif op == "2":
+        mostrar_extrato_periodo(conta.id)
+    elif op == "3":
+        print("1- Hoje")
+        print("2- Ultimos 7 dias")
+        print("3- ultimos 30 dias")
+        op1 = input("Escolha: ")
+        if op1 == "1":
+            mostrar_extrato_rapido(conta.id, 1)
+        elif op1 == "2":
+            mostrar_extrato_rapido(conta.id, 7)
+        elif op1 == "3":
+            mostrar_extrato_rapido(conta.id, 30)
+        else:
+            print("Opcao invalida")
+    elif op == "4":
+        exportar_extrato(conta.id)
+    elif op == "5":
+        exportar_extrato_periodo(conta.id)
+    elif op == "6":
+        exportar_csv(conta.id)
+    else:
+        print("Opcao Invalida")
+
+
 def menu(conta):
     while True:
         print("\n--- MENU ---")
@@ -48,38 +83,7 @@ def menu(conta):
                 print("Transferência realizada")
 
             elif opcao == "5":
-                print("1 - Extrato")
-                print("2 - Extrato por periodo")
-                print("3 - Extrato rapido")
-                print("4 - Exportar extrato")
-                print("5 - Exportar extrato por periodo")
-                print("6 - Exportar arquivo csv")
-                op = input("Escolha: ")
-                if op == "1":
-                    mostrar_extrato(conta.id)
-                elif op == "2":
-                    mostrar_extrato_periodo(conta.id)
-                elif op == "3":
-                    print("1- Hoje")
-                    print("2- Ultimos 7 dias")
-                    print("3- ultimos 30 dias")
-                    op1 = input("Escolha: ")
-                    if op1 == "1":
-                        mostrar_extrato_rapido(conta.id, 1)
-                    elif op1 == "2":
-                        mostrar_extrato_rapido(conta.id, 7)
-                    elif op1 == "3":
-                        mostrar_extrato_rapido(conta.id, 30)
-                    else:
-                        print("Opcao invalida")
-                elif op == "4":
-                    exportar_extrato(conta.id)
-                elif op == "5":
-                    exportar_extrato_periodo(conta.id)
-                elif op == "6":
-                    exportar_csv(conta.id)
-                else:
-                    print("Opcao Invalida")
+                submenu_extratos(conta)
 
             elif opcao == "0":
                 print("Saindo...")
