@@ -96,6 +96,21 @@ def menu(conta):
             print(f"Erro: {e}")
 
 
+def tentar_login():
+    while True:
+        nome = input("Usuário: ")
+        senha = input("Senha: ")
+        try:
+            usuario = login(nome, senha)
+            print("Login OK")
+            return usuario
+        except ValueError as e:
+            print(f"Erro: {e}")
+        except Exception as e:
+            print(f"Erro: {e}")
+            return None
+
+
 def main():
     criar_tabelas()
     while True:
@@ -115,19 +130,7 @@ def main():
                 print(f"Erro: {e}")
 
         elif escolha == "1":
-            usuario = None
-            while True:
-                nome = input("Usuário: ")
-                senha = input("Senha: ")
-                try:
-                    usuario = login(nome, senha)
-                    print("Login OK")
-                    break
-                except ValueError as e:
-                    print(f"Erro: {e}")
-                except Exception as e:
-                    print(f"Erro: {e}")
-                    break
+            usuario = tentar_login()
 
             if usuario is None:
                 break
