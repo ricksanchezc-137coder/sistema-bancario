@@ -6,7 +6,7 @@ import sqlite3
 from unittest.mock import patch
 
 import banco
-import servico_v2  # ← ajuste pro nome real do seu arquivo
+import servico  # ← ajuste pro nome real do seu arquivo
 
 
 class TestFuncoesComBanco(unittest.TestCase):
@@ -40,8 +40,8 @@ class TestFuncoesComBanco(unittest.TestCase):
         conn.commit()   # ← explícito
         conn.close()    # ← fecha antes de depositar abrir a dela
     
-        servico_v2.depositar(1, 1000.0)
-        servico_v2.depositar(2, 500.0)
+        servico.depositar(1, 1000.0)
+        servico.depositar(2, 500.0)
 
 
 
@@ -52,7 +52,7 @@ class TestFuncoesComBanco(unittest.TestCase):
     # ── depositar ───────────────────────────────────────────
 
     def test_depositar_aumenta_saldo(self):
-        servico_v2.depositar(1, 200.0)
+        servico.depositar(1, 200.0)
 
         with sqlite3.connect(self.db_path) as conn:
             row = conn.execute(
@@ -63,12 +63,12 @@ class TestFuncoesComBanco(unittest.TestCase):
 
     def test_depositar_valor_negativo_deve_falhar(self):
         with self.assertRaises(ValueError):
-            servico_v2.depositar(1, -50.0)
+            servico.depositar(1, -50.0)
 
     # ── sacar ───────────────────────────────────────────────
 
     def test_sacar_diminui_saldo(self):
-        servico_v2.sacar(1, 300.0)
+        servico.sacar(1, 300.0)
 
         with sqlite3.connect(self.db_path) as conn:
             row = conn.execute(
@@ -79,12 +79,12 @@ class TestFuncoesComBanco(unittest.TestCase):
 
     def test_sacar_saldo_insuficiente_deve_falhar(self):
         with self.assertRaises(ValueError):
-            servico_v2.sacar(1, 9999.0)
+            servico.sacar(1, 9999.0)
 
     # ── transferir ──────────────────────────────────────────
 
     def test_transferir_move_saldo_corretamente(self):
-        servico_v2.transferir(1, "maria", 200.0)  # ← "maria", não 2
+        servico.transferir(1, "maria", 200.0)  # ← "maria", não 2
     
         with sqlite3.connect(self.db_path) as conn:
             origem = conn.execute(
@@ -99,7 +99,7 @@ class TestFuncoesComBanco(unittest.TestCase):
 
     def test_transferir_saldo_insuficiente_deve_falhar(self):
         with self.assertRaises(ValueError):
-            servico_v2.transferir(1, "maria", 9999.0)  # ← "maria", não 2
+            servico.transferir(1, "maria", 9999.0)  # ← "maria", não 2
     
 
 

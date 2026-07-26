@@ -1,7 +1,7 @@
 import pytest
 import banco
 from main import obter_conta, menu
-from servico_v2 import depositar, calcular_saldo
+from servico import depositar, calcular_saldo
 
 
 def test_opcao_1_mostra_saldo(capsys, monkeypatch, usuario_autenticado):

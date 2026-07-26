@@ -4,7 +4,7 @@ import os
 from unittest.mock import patch
 import banco
 from banco import criar_tabelas
-from servico_v2 import depositar
+from servico import depositar
 
 _log = []  # rastreia quantas vezes cada fixture é inicializada
 

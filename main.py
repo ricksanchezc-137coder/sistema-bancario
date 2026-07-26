@@ -1,6 +1,6 @@
 from banco import criar_tabelas, buscar_um
 from security import registrar_usuario, login
-from servico_v2 import depositar, sacar, transferir
+from servico import depositar, sacar, transferir
 from relatorios import exportar_csv, mostrar_extrato, mostrar_extrato_periodo, mostrar_extrato_rapido, exportar_extrato, exportar_extrato_periodo
 from models import Conta
 

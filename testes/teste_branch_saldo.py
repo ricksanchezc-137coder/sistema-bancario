@@ -1,4 +1,4 @@
-from servico_v2 import calcular_saldo
+from servico import calcular_saldo
 def test_calcular_saldo_ignora_tipo_desconhecido(conn):
     cursor = conn.cursor()
 

@@ -1,6 +1,6 @@
 import pytest
 from security import registrar_usuario
-from servico_v2 import depositar, verificar_consistencia
+from servico import depositar, verificar_consistencia
 
 
 @pytest.fixture
