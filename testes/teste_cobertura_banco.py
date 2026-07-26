@@ -1,5 +1,5 @@
 import banco
-import servico_v2
+import servico
 from dados import TIPO_DEPOSITO
 
 
@@ -10,8 +10,8 @@ def test_buscar_todos_retorna_transacoes_reais(banco_temp, usuario_registrado):
     )
     conta_id = conta["id"]
 
-    servico_v2.depositar(conta_id=conta_id, valor=150.0)
-    servico_v2.depositar(conta_id=conta_id, valor=50.0)
+    servico.depositar(conta_id=conta_id, valor=150.0)
+    servico.depositar(conta_id=conta_id, valor=50.0)
 
     transacoes = banco.buscar_todos(
         "SELECT * FROM transacoes WHERE conta_destino_id = ?",

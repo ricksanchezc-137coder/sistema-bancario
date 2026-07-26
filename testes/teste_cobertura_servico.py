@@ -1,6 +1,6 @@
 
 import pytest
-import servico_v2 as sv
+import servico as sv
 import security
 from dados import LIMITE_SAQUE
 

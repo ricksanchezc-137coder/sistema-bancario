@@ -1,7 +1,7 @@
-from banco import buscar_um, executar_transacao
+from banco import buscar_um, buscar_todos, executar_transacao, executar
 from dados import LIMITE_SAQUE, TIPO_DEPOSITO, TIPO_SAQUE, TIPO_TRANSFERENCIA_ENVIADA, TIPO_TRANSFERENCIA_RECEBIDA
 from models import Conta
-from datetime import datetime
+from datetime import datetime, date
 
 # ------------------------
 # VALIDAÇÕES
@@ -12,7 +12,15 @@ def validar_valor(valor: float):
         raise ValueError("Valor inválido")
 
 
-def obter_conta(cursor, conta_id: int):
+def validar_saque(saldo : float, valor : float) -> float:
+    if valor > saldo:
+        raise ValueError("saldo insuficiente")
+    if valor > LIMITE_SAQUE:
+        raise ValueError("Limite de saque excedido")
+    return saldo - valor
+
+
+def obter_conta(cursor, conta_id: int, contexto: str = "Conta"):
     cursor.execute(
         "SELECT id, usuario_id, saldo FROM contas WHERE id = ?",
         (conta_id,)
@@ -20,7 +28,7 @@ def obter_conta(cursor, conta_id: int):
     conta = cursor.fetchone()
 
     if not conta:
-        raise ValueError("Conta não encontrada")
+        raise ValueError(f"{contexto} não encontrada")
 
     return Conta.from_row(conta)
 
@@ -72,8 +80,9 @@ def verificar_consistencia(cursor, conta_id: int):
 # OPERAÇÕES
 # ------------------------
 
-def depositar(conta_id: int, valor: float):
+def depositar(conta_id: int, valor: float, agora: datetime = None):
     validar_valor(valor)
+    agora = agora or datetime.now()
 
     def operacao(cursor):
         conta = obter_conta(cursor, conta_id)
@@ -87,25 +96,21 @@ def depositar(conta_id: int, valor: float):
         cursor.execute("""
             INSERT INTO transacoes(tipo, conta_destino_id, valor, saldo_apos, data_hora)
             VALUES(?, ?, ?, ?, ?)
-        """, (TIPO_DEPOSITO, conta.id, valor, novo_saldo, datetime.now().isoformat()))
+        """, (TIPO_DEPOSITO, conta.id, valor, novo_saldo, agora.isoformat()))
 
         verificar_consistencia(cursor, conta_id)
 
     executar_transacao(operacao)
 
 
-def sacar(conta_id: int, valor: float):
+def sacar(conta_id: int, valor: float, agora: datetime = None):
     validar_valor(valor)
+    agora = agora or datetime.now()
 
     def operacao(cursor):
         conta = obter_conta(cursor, conta_id)
 
-        if valor > conta.saldo:
-            raise ValueError("Saldo insuficiente")
-        if valor > LIMITE_SAQUE:
-            raise ValueError("Limite de saque excedido")
-
-        novo_saldo = conta.saldo - valor
+        novo_saldo = validar_saque(conta.saldo, valor)
 
         cursor.execute(
             "UPDATE contas SET saldo = ? WHERE id = ?",
@@ -115,18 +120,19 @@ def sacar(conta_id: int, valor: float):
         cursor.execute("""
             INSERT INTO transacoes(tipo, conta_origem_id, valor, saldo_apos, data_hora)
             VALUES(?, ?, ?, ?, ?)
-        """, (TIPO_SAQUE, conta.id, valor, novo_saldo, datetime.now().isoformat()))
+        """, (TIPO_SAQUE, conta.id, valor, novo_saldo, agora.isoformat()))
 
         verificar_consistencia(cursor, conta_id)
 
     executar_transacao(operacao)
 
 
-def transferir(origem_id: int, destino_nome: str, valor: float):
+def transferir(origem_id: int, destino_nome: str, valor: float, agora: datetime = None):
     validar_valor(valor)
+    agora = agora or datetime.now()
 
     def operacao(cursor):
-        conta_origem = obter_conta(cursor, origem_id)
+        conta_origem = obter_conta(cursor, origem_id, contexto="Conta de origem")
 
         if valor > conta_origem.saldo:
             raise ValueError("Saldo insuficiente")
@@ -166,7 +172,7 @@ def transferir(origem_id: int, destino_nome: str, valor: float):
             (novo_saldo_destino, conta_destino.id)
         )
 
-        data_hora = datetime.now().isoformat()
+        data_hora = agora.isoformat()
 
         cursor.execute("""
             INSERT INTO transacoes(tipo, conta_origem_id, conta_destino_id, valor, saldo_apos, data_hora)
@@ -182,13 +188,59 @@ def transferir(origem_id: int, destino_nome: str, valor: float):
         verificar_consistencia(cursor, conta_destino.id)
 
     executar_transacao(operacao)
+def resolver_conta_destino(destino_nome: str):
+    usuario = buscar_um(
+        "SELECT id FROM usuarios WHERE nome = ?",
+        (destino_nome,)
+    )
+    if not usuario:
+        raise ValueError("Usuário de destino não encontrado")
+
+    conta_destino_row = buscar_um(
+        "SELECT id FROM contas WHERE usuario_id = ?",
+        (usuario["id"],)
+    )
+    if not conta_destino_row:
+        raise ValueError("Conta de destino não encontrada")
+
+    return conta_destino_row["id"]
 
 
+def agendar_transferencia(origem_id: int, destino_nome: str, valor: float, data_agendada: date):
+    if data_agendada < date.today():
+        raise ValueError("Nao e possivel agendar para data passada")
+    conta_destino_id = resolver_conta_destino(destino_nome)
+
+    executar(
+        """
+        INSERT INTO transferencias_agendadas
+        (conta_origem_id, conta_destino_id, valor, data_agendada, status)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (origem_id, conta_destino_id, valor, data_agendada.isoformat(), "pendente")
+    )
 
 
+def executar_transferencias_vencidas(hoje: date = None):
+    hoje = hoje or date.today()
+    vencidas = buscar_todos(
+        "SELECT * FROM transferencias_agendadas WHERE status = 'pendente' AND data_agendada <= ?",
+        (hoje,)
+    )
 
-
-
-
-
+    for transferencia in vencidas:
+        def operacao(cursor, transferencia=transferencia):
+            cursor.execute(
+                "UPDATE contas SET saldo = saldo - ? WHERE id = ?",
+                (transferencia['valor'], transferencia['conta_origem_id'])
+            )
+            cursor.execute(
+                "UPDATE contas SET saldo = saldo + ? WHERE id = ?",
+                (transferencia['valor'], transferencia['conta_destino_id'])
+            )
+            cursor.execute(
+                "UPDATE transferencias_agendadas SET status = 'executada' WHERE id = ?",
+                (transferencia['id'],)
+            )
+        executar_transacao(operacao)
 

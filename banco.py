@@ -41,6 +41,20 @@ def criar_tabelas():
         )
         """)
 
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS transferencias_agendadas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            conta_origem_id INTEGER NOT NULL,
+            conta_destino_id INTEGER NOT NULL,
+            valor REAL NOT NULL,
+            data_agendada TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pendente',
+
+            FOREIGN KEY (conta_origem_id) REFERENCES contas(id),
+            FOREIGN KEY (conta_destino_id) REFERENCES contas(id)
+        )
+        """)
+
 def executar(sql, params=None):
     with conectar() as conn:
         cursor = conn.cursor()

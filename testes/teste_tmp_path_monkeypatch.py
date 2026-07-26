@@ -2,13 +2,13 @@ import os
 import pytest
 import banco
 from banco import criar_tabelas
-import servico_v2
+import servico
 
 
 def _criar_conta(nome, saldo=0.0):
     """Insere usuario+conta diretamente e retorna conta_id.
     Conta sempre nasce com saldo=0 na tabela; se `saldo` > 0,
-    popula pelo caminho oficial (servico_v2.depositar), que também
+    popula pelo caminho oficial (servico.depositar), que também
     grava a transação correspondente. Isso evita divergência entre
     contas.saldo e o que verificar_consistencia calcula a partir
     de transacoes, não importa como esta função seja chamada depois.
@@ -30,7 +30,7 @@ def _criar_conta(nome, saldo=0.0):
     conta_id = row[0]
 
     if saldo:
-        servico_v2.depositar(conta_id, saldo)
+        servico.depositar(conta_id, saldo)
 
     return conta_id
 
@@ -59,7 +59,7 @@ def test_depositar_com_tmp_path(tmp_path, monkeypatch):
     monkeypatch.setattr(banco, "DB_NAME", str(tmp_path / "banco.db"))
     criar_tabelas()
     conta_id = _criar_conta("joao")
-    servico_v2.depositar(conta_id, 500.0)
+    servico.depositar(conta_id, 500.0)
     assert _saldo(conta_id) == 500.0
 
 
@@ -70,8 +70,8 @@ def test_sacar_com_tmp_path(tmp_path, monkeypatch):
     monkeypatch.setattr(banco, "DB_NAME", str(tmp_path / "banco.db"))
     criar_tabelas()
     conta_id = _criar_conta("maria")
-    servico_v2.depositar(conta_id, 800.0)
-    servico_v2.sacar(conta_id, 300.0)
+    servico.depositar(conta_id, 800.0)
+    servico.sacar(conta_id, 300.0)
     assert _saldo(conta_id) == 500.0
 
 
@@ -87,9 +87,9 @@ def banco_tmp(tmp_path, monkeypatch):
 def test_transferir_com_fixture_tmp(banco_tmp):
     conta_alice = _criar_conta("alice")
     conta_bob = _criar_conta("bob")
-    servico_v2.depositar(conta_alice, 1000.0)
-    servico_v2.depositar(conta_bob, 500.0)
-    servico_v2.transferir(conta_alice, "bob", 200.0)
+    servico.depositar(conta_alice, 1000.0)
+    servico.depositar(conta_bob, 500.0)
+    servico.transferir(conta_alice, "bob", 200.0)
     assert _saldo(conta_alice) == 800.0
     assert _saldo(conta_bob) == 700.0
 
@@ -101,7 +101,7 @@ def test_isolamento_a(tmp_path, monkeypatch):
     monkeypatch.setattr(banco, "DB_NAME", str(tmp_path / "banco.db"))
     criar_tabelas()
     conta_id = _criar_conta("carlos")
-    servico_v2.depositar(conta_id, 2000.0)
+    servico.depositar(conta_id, 2000.0)
     assert _saldo(conta_id) == 2000.0
 
 
