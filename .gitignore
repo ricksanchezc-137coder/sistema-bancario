@@ -7,3 +7,7 @@ htmlcov/
 coverage.xml
 coverage.json
 database.db
+manutencao.log
+*.tar.gz
+exemplo_pragma.py
+
