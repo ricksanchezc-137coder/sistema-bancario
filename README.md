@@ -46,3 +46,15 @@ Pra rodar automaticamente, adicione ao crontab:
 
 Se o backup demorar, é recomendável rodar dentro de uma sessão `tmux` pra não depender do terminal ficar aberto.
 
+
+
+07/09/2026
+### Logging (substituindo o `manutencao.sh`)
+
+`manutencao.py` reproduz a lógica de manutenção do projeto (testes, limpeza de cache, backup) usando o módulo `logging` da biblioteca padrão em vez de `print`/`tee`:
+
+- Console mostra só o essencial (nível `INFO+`)
+- `manutencao.log` (com rotação automática, via `RotatingFileHandler`) guarda tudo em detalhe, incluindo itens individuais de limpeza e backup
+- Trava de execução única por PID (`manutencao.lock`), mais robusta que o `pgrep` usado no script bash original
+
+O `manutencao.sh` permanece na raiz do projeto para referência/comparação.
