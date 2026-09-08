@@ -1,14 +1,14 @@
-class Usuario:
-    def __init__(self, id: int, nome: str):
-        self.id = id
-        self.nome = nome
-        
-    @classmethod
-    def from_row(cls, row):
-        return cls(id=row["id"], nome=row["nome"])
+from dataclasses import dataclass
 
-    def __repr__(self):
-        return f"Usuario(id={self.id}, nome='{self.nome}')"
+
+@dataclass
+class Usuario:
+    id: int
+    nome: str
+
+    @classmethod
+    def from_row(cls, row) -> "Usuario":
+        return cls(id=row["id"], nome=row["nome"])
 
 
 class Conta:
@@ -16,10 +16,20 @@ class Conta:
         self.id = id
         self.usuario_id = usuario_id
         self.saldo = saldo
-        
+
+    @property
+    def saldo(self) -> float:
+        return self._saldo
+
+    @saldo.setter
+    def saldo(self, valor: float) -> None:
+        if valor < 0:
+            raise ValueError("saldo não pode ser negativo")
+        self._saldo = valor
+
     @classmethod
-    def from_row(cls, row):
+    def from_row(cls, row) -> "Conta":
         return cls(id=row["id"], usuario_id=row["usuario_id"], saldo=row["saldo"])
-    
-    def __repr__(self):
+
+    def __repr__(self) -> str:
         return f"Conta(id={self.id}, usuario_id={self.usuario_id}, saldo={self.saldo})"

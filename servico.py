@@ -1,43 +1,57 @@
-from banco import buscar_um, buscar_todos, executar_transacao, executar
-from dados import LIMITE_SAQUE, TIPO_DEPOSITO, TIPO_SAQUE, TIPO_TRANSFERENCIA_ENVIADA, TIPO_TRANSFERENCIA_RECEBIDA
+from datetime import date, datetime
+
+from banco import buscar_todos, buscar_um, executar, executar_transacao
+from dados import (
+    LIMITE_SAQUE,
+    TIPO_DEPOSITO,
+    TIPO_SAQUE,
+    TIPO_TRANSFERENCIA_ENVIADA,
+    TIPO_TRANSFERENCIA_RECEBIDA,
+)
+from excecoes import (
+    AgendamentoInvalidoError,
+    ContaNaoEncontradaError,
+    InconsistenciaSaldoError,
+    LimiteSaqueExcedidoError,
+    SaldoInsuficienteError,
+    TransferenciaParaSiMesmoError,
+    UsuarioNaoEncontradoError,
+    ValorInvalidoError,
+)
 from models import Conta
-from datetime import datetime, date
+
 
 # ------------------------
 # VALIDAÇÕES
 # ------------------------
-
-def validar_valor(valor: float):
+def validar_valor(valor: float) -> None:
     if valor <= 0:
-        raise ValueError("Valor inválido")
+        raise ValorInvalidoError("Valor inválido")
 
 
-def validar_saque(saldo : float, valor : float) -> float:
+def validar_saque(saldo: float, valor: float) -> float:
     if valor > saldo:
-        raise ValueError("saldo insuficiente")
+        raise SaldoInsuficienteError(saldo, valor)
     if valor > LIMITE_SAQUE:
-        raise ValueError("Limite de saque excedido")
+        raise LimiteSaqueExcedidoError(valor, LIMITE_SAQUE)
     return saldo - valor
 
 
-def obter_conta(cursor, conta_id: int, contexto: str = "Conta"):
+def obter_conta(cursor, conta_id: int, contexto: str = "Conta") -> Conta:
     cursor.execute(
         "SELECT id, usuario_id, saldo FROM contas WHERE id = ?",
         (conta_id,)
     )
     conta = cursor.fetchone()
-
     if not conta:
-        raise ValueError(f"{contexto} não encontrada")
-
+        raise ContaNaoEncontradaError(f"{contexto} não encontrada")
     return Conta.from_row(conta)
 
 
 # ------------------------
 # CONSISTÊNCIA
 # ------------------------
-
-def calcular_saldo(cursor, conta_id: int):
+def calcular_saldo(cursor, conta_id: int) -> float:
     cursor.execute("""
         SELECT tipo, conta_origem_id, conta_destino_id, valor
         FROM transacoes
@@ -45,11 +59,9 @@ def calcular_saldo(cursor, conta_id: int):
     """, (conta_id, conta_id))
 
     saldo = 0
-
     for t in cursor.fetchall():
         tipo = t["tipo"]
         valor = t["valor"]
-
         if tipo == TIPO_DEPOSITO:
             saldo += valor
         elif tipo == TIPO_SAQUE:
@@ -60,105 +72,88 @@ def calcular_saldo(cursor, conta_id: int):
         elif tipo == TIPO_TRANSFERENCIA_RECEBIDA:
             if t["conta_destino_id"] == conta_id:
                 saldo += valor
-
     return saldo
 
 
-def verificar_consistencia(cursor, conta_id: int):
+def verificar_consistencia(cursor, conta_id: int) -> None:
     conta = obter_conta(cursor, conta_id)
-
     saldo_tabela = conta.saldo
     saldo_calculado = calcular_saldo(cursor, conta_id)
-
     if abs(saldo_tabela - saldo_calculado) > 0.01:
-        raise Exception(
-            f"Inconsistência: tabela={saldo_tabela}, calculado={saldo_calculado}"
-        )
+        raise InconsistenciaSaldoError(saldo_tabela, saldo_calculado)
 
 
 # ------------------------
 # OPERAÇÕES
 # ------------------------
-
-def depositar(conta_id: int, valor: float, agora: datetime = None):
+def depositar(conta_id: int, valor: float, agora: datetime = None) -> None:
     validar_valor(valor)
     agora = agora or datetime.now()
 
     def operacao(cursor):
         conta = obter_conta(cursor, conta_id)
         novo_saldo = conta.saldo + valor
-
         cursor.execute(
             "UPDATE contas SET saldo = ? WHERE id = ?",
             (novo_saldo, conta.id)
         )
-
         cursor.execute("""
             INSERT INTO transacoes(tipo, conta_destino_id, valor, saldo_apos, data_hora)
             VALUES(?, ?, ?, ?, ?)
         """, (TIPO_DEPOSITO, conta.id, valor, novo_saldo, agora.isoformat()))
-
         verificar_consistencia(cursor, conta_id)
 
     executar_transacao(operacao)
 
 
-def sacar(conta_id: int, valor: float, agora: datetime = None):
+def sacar(conta_id: int, valor: float, agora: datetime = None) -> None:
     validar_valor(valor)
     agora = agora or datetime.now()
 
     def operacao(cursor):
         conta = obter_conta(cursor, conta_id)
-
         novo_saldo = validar_saque(conta.saldo, valor)
-
         cursor.execute(
             "UPDATE contas SET saldo = ? WHERE id = ?",
             (novo_saldo, conta.id)
         )
-
         cursor.execute("""
             INSERT INTO transacoes(tipo, conta_origem_id, valor, saldo_apos, data_hora)
             VALUES(?, ?, ?, ?, ?)
         """, (TIPO_SAQUE, conta.id, valor, novo_saldo, agora.isoformat()))
-
         verificar_consistencia(cursor, conta_id)
 
     executar_transacao(operacao)
 
 
-def transferir(origem_id: int, destino_nome: str, valor: float, agora: datetime = None):
+def transferir(origem_id: int, destino_nome: str, valor: float, agora: datetime = None) -> None:
     validar_valor(valor)
     agora = agora or datetime.now()
 
     def operacao(cursor):
         conta_origem = obter_conta(cursor, origem_id, contexto="Conta de origem")
-
         if valor > conta_origem.saldo:
-            raise ValueError("Saldo insuficiente")
+            raise SaldoInsuficienteError(conta_origem.saldo, valor)
 
         cursor.execute(
             "SELECT id FROM usuarios WHERE nome = ?",
             (destino_nome,)
         )
         usuario = cursor.fetchone()
-
         if not usuario:
-            raise ValueError("Usuário de destino não encontrado")
+            raise UsuarioNaoEncontradoError("Usuário de destino não encontrado")
 
         cursor.execute(
             "SELECT id, usuario_id, saldo FROM contas WHERE usuario_id = ?",
             (usuario["id"],)
         )
         conta_destino_row = cursor.fetchone()
-
         if not conta_destino_row:
-            raise ValueError("Conta de destino não encontrada")
-
+            raise ContaNaoEncontradaError("Conta de destino não encontrada")
         conta_destino = Conta.from_row(conta_destino_row)
 
         if conta_destino.id == origem_id:
-            raise ValueError("Transferência para si mesmo")
+            raise TransferenciaParaSiMesmoError("Transferência para si mesmo")
 
         novo_saldo_origem = conta_origem.saldo - valor
         novo_saldo_destino = conta_destino.saldo + valor
@@ -173,12 +168,10 @@ def transferir(origem_id: int, destino_nome: str, valor: float, agora: datetime 
         )
 
         data_hora = agora.isoformat()
-
         cursor.execute("""
             INSERT INTO transacoes(tipo, conta_origem_id, conta_destino_id, valor, saldo_apos, data_hora)
             VALUES (?, ?, ?, ?, ?, ?)
         """, (TIPO_TRANSFERENCIA_ENVIADA, origem_id, conta_destino.id, valor, novo_saldo_origem, data_hora))
-
         cursor.execute("""
             INSERT INTO transacoes(tipo, conta_origem_id, conta_destino_id, valor, saldo_apos, data_hora)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -188,27 +181,30 @@ def transferir(origem_id: int, destino_nome: str, valor: float, agora: datetime 
         verificar_consistencia(cursor, conta_destino.id)
 
     executar_transacao(operacao)
-def resolver_conta_destino(destino_nome: str):
+
+
+def resolver_conta_destino(destino_nome: str) -> int:
     usuario = buscar_um(
         "SELECT id FROM usuarios WHERE nome = ?",
         (destino_nome,)
     )
     if not usuario:
-        raise ValueError("Usuário de destino não encontrado")
+        raise UsuarioNaoEncontradoError("Usuário de destino não encontrado")
 
     conta_destino_row = buscar_um(
         "SELECT id FROM contas WHERE usuario_id = ?",
         (usuario["id"],)
     )
     if not conta_destino_row:
-        raise ValueError("Conta de destino não encontrada")
+        raise ContaNaoEncontradaError("Conta de destino não encontrada")
 
     return conta_destino_row["id"]
 
 
-def agendar_transferencia(origem_id: int, destino_nome: str, valor: float, data_agendada: date):
+def agendar_transferencia(origem_id: int, destino_nome: str, valor: float, data_agendada: date) -> None:
     if data_agendada < date.today():
-        raise ValueError("Nao e possivel agendar para data passada")
+        raise AgendamentoInvalidoError("Nao e possivel agendar para data passada")
+
     conta_destino_id = resolver_conta_destino(destino_nome)
 
     executar(
@@ -221,13 +217,12 @@ def agendar_transferencia(origem_id: int, destino_nome: str, valor: float, data_
     )
 
 
-def executar_transferencias_vencidas(hoje: date = None):
+def executar_transferencias_vencidas(hoje: date = None) -> None:
     hoje = hoje or date.today()
     vencidas = buscar_todos(
         "SELECT * FROM transferencias_agendadas WHERE status = 'pendente' AND data_agendada <= ?",
         (hoje,)
     )
-
     for transferencia in vencidas:
         def operacao(cursor, transferencia=transferencia):
             cursor.execute(
@@ -243,4 +238,3 @@ def executar_transferencias_vencidas(hoje: date = None):
                 (transferencia['id'],)
             )
         executar_transacao(operacao)
-
