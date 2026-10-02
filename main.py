@@ -36,33 +36,35 @@ def submenu_extratos(conta: Conta) -> None:
     print("7 - Exportar arquivo json")
     op = input("Escolha: ")
 
-    if op == "1":
-        mostrar_extrato(conta.id)
-    elif op == "2":
-        mostrar_extrato_periodo(conta.id)
-    elif op == "3":
-        print("1- Hoje")
-        print("2- Ultimos 7 dias")
-        print("3- ultimos 30 dias")
-        op1 = input("Escolha: ")
-        if op1 == "1":
-            mostrar_extrato_rapido(conta.id, 1)
-        elif op1 == "2":
-            mostrar_extrato_rapido(conta.id, 7)
-        elif op1 == "3":
-            mostrar_extrato_rapido(conta.id, 30)
-        else:
-            print("Opcao invalida")
-    elif op == "4":
-        exportar_extrato(conta.id)
-    elif op == "5":
-        exportar_extrato_periodo(conta.id)
-    elif op == "6":
-        exportar_csv(conta.id)
-    elif op == "7":
-        exportar_json(conta.id)
-    else:
-        print("Opcao Invalida")
+    match op:
+        case "1":
+            mostrar_extrato(conta.id)
+        case "2":
+            mostrar_extrato_periodo(conta.id)
+        case "3":
+            print("1- Hoje")
+            print("2- Ultimos 7 dias")
+            print("3- ultimos 30 dias")
+            op1 = input("Escolha: ")
+            match op1:
+                 case "1":
+                     mostrar_extrato_rapido(conta.id, 1)
+                 case "2":
+                     mostrar_extrato_rapido(conta.id, 7)
+                 case "3":
+                     mostrar_extrato_rapido(conta.id, 30)
+                 case _:
+                     print("Opcao invalida")
+        case "4":
+            exportar_extrato(conta.id)
+        case "5":
+            exportar_extrato_periodo(conta.id)
+        case "6":
+            exportar_csv(conta.id)
+        case "7":
+            exportar_json(conta.id)
+        case _:
+            print("Opcao Invalida")
 
 
 def menu(conta: Conta) -> None:
@@ -77,29 +79,30 @@ def menu(conta: Conta) -> None:
         opcao = input("Escolha: ")
 
         try:
-            if opcao == "1":
-                conta = obter_conta(conta.usuario_id)
-                print(f"Saldo: {conta.saldo}")
-            elif opcao == "2":
-                valor = float(input("Valor: "))
-                depositar(conta.id, valor)
-                print("Depósito realizado")
-            elif opcao == "3":
-                valor = float(input("Valor: "))
-                sacar(conta.id, valor)
-                print("Saque realizado")
-            elif opcao == "4":
-                destino_nome = input("Usuario destino: ")
-                valor = float(input("Valor: "))
-                transferir(conta.id, destino_nome, valor)
-                print("Transferência realizada")
-            elif opcao == "5":
-                submenu_extratos(conta)
-            elif opcao == "0":
-                print("Saindo...")
-                break
-            else:
-                print("Opção inválida")
+            match opcao:
+                case "1":
+                    conta = obter_conta(conta.usuario_id)
+                    print(f"Saldo: {conta.saldo}")
+                case "2":
+                    valor = float(input("Valor: "))
+                    depositar(conta.id, valor)
+                    print("Depósito realizado")
+                case "3":
+                    valor = float(input("Valor: "))
+                    sacar(conta.id, valor)
+                    print("Saque realizado")
+                case "4":
+                    destino_nome = input("Usuario destino: ")
+                    valor = float(input("Valor: "))
+                    transferir(conta.id, destino_nome, valor)
+                    print("Transferência realizada")
+                case "5":
+                    submenu_extratos(conta)
+                case "0":
+                    print("Saindo...")
+                    break
+                case _:
+                    print("Opção inválida")
         except ErroContaBancaria as e:
             print(f"Erro: {e}")
 

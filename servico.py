@@ -1,6 +1,7 @@
 from datetime import date, datetime
 
 from banco import buscar_todos, buscar_um, executar, executar_transacao
+import dados
 from dados import (
     LIMITE_SAQUE,
     TIPO_DEPOSITO,
@@ -62,15 +63,14 @@ def calcular_saldo(cursor, conta_id: int) -> float:
     for t in cursor.fetchall():
         tipo = t["tipo"]
         valor = t["valor"]
-        if tipo == TIPO_DEPOSITO:
-            saldo += valor
-        elif tipo == TIPO_SAQUE:
-            saldo -= valor
-        elif tipo == TIPO_TRANSFERENCIA_ENVIADA:
-            if t["conta_origem_id"] == conta_id:
+        match tipo:
+            case dados.TIPO_DEPOSITO:
+                saldo += valor
+            case dados.TIPO_SAQUE:
                 saldo -= valor
-        elif tipo == TIPO_TRANSFERENCIA_RECEBIDA:
-            if t["conta_destino_id"] == conta_id:
+            case dados.TIPO_TRANSFERENCIA_ENVIADA if t["conta_origem_id"] == conta_id:
+                saldo -= valor
+            case dados.TIPO_TRANSFERENCIA_RECEBIDA if t["conta_destino_id"] == conta_id:
                 saldo += valor
     return saldo
 
