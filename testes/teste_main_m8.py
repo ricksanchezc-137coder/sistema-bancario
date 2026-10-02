@@ -1,3 +1,4 @@
+from excecoes import ContaBloqueadaError, CredenciaisInvalidasError, UsuarioJaExisteError
 import unittest
 from unittest import mock
 from main import obter_conta, menu, main
@@ -200,11 +201,11 @@ class TestMain(unittest.TestCase):
             with mock.patch("main.criar_tabelas"):
                 with mock.patch(
                     "main.registrar_usuario",
-                    side_effect=ValueError("Usuário já existe")
+                    side_effect=UsuarioJaExisteError("joao")
                 ):
                     with mock.patch("builtins.print") as mock_print:
                         main()
-                        mock_print.assert_any_call("Erro: Usuário já existe")
+                        mock_print.assert_any_call("Erro: Usuario 'joao' ja existe")
 
     def test_opcao_invalida_main(self):
         inputs = ["9", "0"]
@@ -245,7 +246,7 @@ class TestMain(unittest.TestCase):
             with mock.patch("main.criar_tabelas"):
                 with mock.patch(
                     "main.login",
-                    side_effect=[ValueError("Senha incorreta"), usuario_fake]
+                    side_effect=[CredenciaisInvalidasError("Senha incorreta"), usuario_fake]
                 ):
                     with mock.patch("main.obter_conta", return_value=conta_fake):
                         with mock.patch("main.menu"):
@@ -270,17 +271,17 @@ class TestMain(unittest.TestCase):
                             mock_print.assert_any_call("Conta não encontrada")
 
 
-    def test_login_excecao_generica(self):
+    def test_login_conta_bloqueada(self):
         inputs = ["1", "joao", "senha123", "0"]
         with mock.patch("builtins.input", side_effect=inputs):
             with mock.patch("main.criar_tabelas"):
                 with mock.patch(
                     "main.login",
-                    side_effect=Exception("Erro inesperado")
+                    side_effect=ContaBloqueadaError("joao", 3)
                 ):
                     with mock.patch("builtins.print") as mock_print:
                         main()
-                        mock_print.assert_any_call("Erro: Erro inesperado")
+                        mock_print.assert_any_call("Erro: Usuario 'joao' bloqueado apos 3 tentativas de login")
 
 
 if __name__ == "__main__":

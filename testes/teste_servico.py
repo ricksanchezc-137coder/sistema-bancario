@@ -1,3 +1,4 @@
+from excecoes import SaldoInsuficienteError, ValorInvalidoError
 # test_banco_funcoes.py
 import unittest
 import os
@@ -62,7 +63,7 @@ class TestFuncoesComBanco(unittest.TestCase):
         self.assertEqual(row[0], 1200.0)
 
     def test_depositar_valor_negativo_deve_falhar(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValorInvalidoError):
             servico.depositar(1, -50.0)
 
     # ── sacar ───────────────────────────────────────────────
@@ -78,7 +79,7 @@ class TestFuncoesComBanco(unittest.TestCase):
         self.assertEqual(row[0], 700.0)
 
     def test_sacar_saldo_insuficiente_deve_falhar(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SaldoInsuficienteError):
             servico.sacar(1, 9999.0)
 
     # ── transferir ──────────────────────────────────────────
@@ -98,7 +99,7 @@ class TestFuncoesComBanco(unittest.TestCase):
         self.assertEqual(destino[0], 700.0)
 
     def test_transferir_saldo_insuficiente_deve_falhar(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SaldoInsuficienteError):
             servico.transferir(1, "maria", 9999.0)  # ← "maria", não 2
     
 

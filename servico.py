@@ -221,7 +221,7 @@ def executar_transferencias_vencidas(hoje: date = None) -> None:
     hoje = hoje or date.today()
     vencidas = buscar_todos(
         "SELECT * FROM transferencias_agendadas WHERE status = 'pendente' AND data_agendada <= ?",
-        (hoje,)
+        (hoje.isoformat(),)
     )
     for transferencia in vencidas:
         def operacao(cursor, transferencia=transferencia):

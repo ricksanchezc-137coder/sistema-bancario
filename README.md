@@ -58,3 +58,9 @@ Se o backup demorar, é recomendável rodar dentro de uma sessão `tmux` pra nã
 - Trava de execução única por PID (`manutencao.lock`), mais robusta que o `pgrep` usado no script bash original
 
 O `manutencao.sh` permanece na raiz do projeto para referência/comparação.
+
+
+#01/10/2026
+"Currículo 15 (Python avançado) concluído: 20 módulos - descriptors, metaclasses, __init_subclass__, __slots__, ABC, Protocol, MRO/super(), singledispatch, async/await, asyncio avançado, contextvars, threading, multiprocessing, concurrent.futures, queue, typing avançado, weakref, pattern matching, profiling e encerramento."
+"Módulo 20 (encerramento) aplicado direto neste projeto: análise módulo a módulo indicou ganho real só em pattern matching e profiling. match/case aplicado em main.py (menu e submenu_extratos) e servico.py (calcular_saldo, com guards; case com nome solto captura em vez de comparar, então foi usado dados.TIPO_X). Profiling (timeit/cProfile, banco de até ~205 mil transações) mostrou custo linear em calcular_saldo, ganho pequeno com índices (~7%) e ganho de 5-7x com a soma em SQL; nenhuma dessas otimizações foi aplicada."
+"Suíte atualizada para as exceções específicas do Módulo 14 (excecoes.py): 171 passed e 1 falha proposital (XPASS strict do Currículo 9). Bug real corrigido no menu(): float('abc') derrubava o programa porque o except só capturava ErroContaBancaria; agora também captura ValueError. DeprecationWarning do adaptador de date (Python 3.12+) corrigido com hoje.isoformat() em executar_transferencias_vencidas."

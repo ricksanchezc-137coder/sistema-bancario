@@ -1,3 +1,4 @@
+from excecoes import ContaBloqueadaError, CredenciaisInvalidasError, UsuarioJaExisteError
 import unittest
 import sqlite3
 import tempfile
@@ -64,7 +65,7 @@ class TestRegistrarUsuario(unittest.TestCase):
 
     def test_usuario_duplicado_levanta_erro(self):
         registrar_usuario("joao", "senha123")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(UsuarioJaExisteError):
             registrar_usuario("joao", "outrasenha")
 
     def test_conta_criada_com_saldo_zero(self):
@@ -103,20 +104,20 @@ class TestLogin(unittest.TestCase):
         self.assertEqual(usuario.nome, "joao")
 
     def test_senha_errada_levanta_erro(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(CredenciaisInvalidasError):
             login("joao", "errada")
 
     def test_usuario_inexistente_levanta_erro(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(CredenciaisInvalidasError):
             login("naoexiste", "qualquer")
 
     def test_bloqueio_por_excesso_de_tentativas(self):
         for _ in range(security.MAX_TENTATIVAS_LOGIN):
             try:
                 login("joao", "errada")
-            except ValueError:
+            except CredenciaisInvalidasError:
                 pass
-        with self.assertRaises(Exception):
+        with self.assertRaises(ContaBloqueadaError):
             login("joao", "senha123")
 
 

@@ -103,7 +103,7 @@ def menu(conta: Conta) -> None:
                     break
                 case _:
                     print("Opção inválida")
-        except ErroContaBancaria as e:
+        except (ErroContaBancaria, ValueError) as e:
             print(f"Erro: {e}")
 
 

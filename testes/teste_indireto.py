@@ -1,3 +1,4 @@
+from excecoes import ValorInvalidoError
 import pytest
 from security import registrar_usuario
 from servico import depositar, verificar_consistencia
@@ -56,7 +57,7 @@ def conta_zerada(conn):
 
 @pytest.mark.parametrize("valor_invalido", [-50, -1, 0])
 def test_depositar_valor_invalido_lanca_valueerror(conta_zerada, valor_invalido):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValorInvalidoError):
         depositar(conta_zerada, valor_invalido)
 
 

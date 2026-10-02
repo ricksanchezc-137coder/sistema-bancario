@@ -1,3 +1,4 @@
+from excecoes import AgendamentoInvalidoError
 import pytest
 from datetime import date, timedelta
 from security import registrar_usuario
@@ -67,7 +68,7 @@ def test_agendar_transferencia_data_passada_gera_erro(conn):
 
     data_passada = date.today() - timedelta(days=1)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(AgendamentoInvalidoError):
         agendar_transferencia(
             origem_id=conta_origem_id,
             destino_nome="joao_destino2",

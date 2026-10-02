@@ -1,3 +1,4 @@
+from excecoes import ContaBloqueadaError, CredenciaisInvalidasError
 import pytest
 import security
 
@@ -19,7 +20,7 @@ def test_login_sucesso_com_stub(mocker):
 def test_login_usuario_nao_existe_com_stub(mocker):
     mocker.patch("security.buscar_um", return_value=None)
 
-    with pytest.raises(ValueError, match="Usuário ou senha inválidos"):
+    with pytest.raises(CredenciaisInvalidasError, match="Usuário ou senha inválidos"):
         security.login("fantasma", "qualquer")
 
 
@@ -31,7 +32,7 @@ def test_login_senha_incorreta_bcrypt_real(mocker):
         "id": 1, "nome": "joao", "senha": hash_valido
     })
 
-    with pytest.raises(ValueError, match="inválidos"):
+    with pytest.raises(CredenciaisInvalidasError, match="inválidos"):
         security.login("joao", "senhaErrada")
 
 
@@ -40,5 +41,5 @@ def test_login_bloqueado_apos_max_tentativas(mocker):
     mocker.patch("security.buscar_um", return_value=None)
     security.tentativas_login["joao"] = dados.MAX_TENTATIVAS_LOGIN
 
-    with pytest.raises(Exception, match="bloqueado"):
+    with pytest.raises(ContaBloqueadaError, match="bloqueado"):
         security.login("joao", "errada")
